@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade View — Mockup v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f7f9; color: #1a2233; font-size: 13px; }
+
+  .topbar { background: #fff; border-bottom: 1px solid #e3e6ea; padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+  .topbar h1 { font-size: 17px; font-weight: 700; }
+  .tab { font-size: 12px; padding: 3px 10px; border-radius: 6px; color: #5a6577; cursor: pointer; }
+  .tab.active { background: #e8f0fe; color: #1a6ee0; font-weight: 600; }
+  .sync { margin-left: auto; font-size: 12px; color: #7a8496; }
+  .sync a { color: #1a6ee0; text-decoration: none; font-weight: 500; }
+
+  .filters { background: #fff; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; border-bottom: 1px solid #e3e6ea; position: relative; }
+  .filters label { font-size: 12.5px; font-weight: 600; color: #3c4658; margin-right: 6px; }
+  .filters select, .filters input[type=text] { border: 1px solid #c9d0da; border-radius: 8px; padding: 7px 10px; font-size: 13px; background: #fff; font-family: inherit; }
+  .filters select { color: #1a6ee0; font-weight: 500; border-color: #1a6ee0; }
+  .colbtn { margin-left: auto; border: 1px solid #c9d0da; border-radius: 8px; background: #fff; padding: 8px 14px; font-size: 13px; cursor: pointer; font-weight: 500; color: #3c4658; font-family: inherit; }
+
+  .meta { padding: 10px 24px; display: flex; justify-content: space-between; color: #5a6577; font-size: 12.5px; }
+  .legend b.buy { color: #0f8a5f; } .legend b.sell { color: #d0342c; }
+
+  .wrap { margin: 0 24px 40px; background: #fff; border: 1px solid #e3e6ea; border-radius: 10px; overflow-x: auto; }
+  table.main { border-collapse: collapse; min-width: 100%; }
+  .main th, .main td { padding: 8px 10px; border-bottom: 1px solid #eef0f3; white-space: nowrap; }
+  .main thead tr.grp th { font-size: 12px; font-weight: 700; color: #3c4658; text-align: center; background: #fafbfc; border-bottom: 1px solid #e3e6ea; border-left: 1px solid #e3e6ea; padding: 10px; }
+  .main thead tr.sub th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #7a8496; text-align: right; background: #fafbfc; font-weight: 600; border-bottom: 1px solid #e3e6ea; }
+  .main thead th.name { text-align: left; min-width: 290px; max-width: 290px; background: #fafbfc; position: sticky; left: 0; z-index: 2; }
+  .main td.name { text-align: left; min-width: 290px; max-width: 290px; white-space: normal; position: sticky; left: 0; background: inherit; z-index: 1; }
+  .main thead th.gline, .main td.gline { border-left: 1px solid #e3e6ea; }
+  .main td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .main td.cur, .main th.cur { background: #f3f8ff !important; }
+
+  .num-pos { color: #0f8a5f; font-weight: 600; }
+  .num-neg { color: #d0342c; font-weight: 600; }
+  .num-zero { color: #c4cad4; }
+
+  tr.total td { background: #fdf0ef; font-weight: 700; }
+  tr.lvl1 td { cursor: pointer; font-weight: 600; background: #fff; }
+  tr.lvl1:hover td { background: #fafbfc; }
+  tr.lvl2 { background: #fafbfc; }
+  tr.lvl2 td { cursor: pointer; }
+  tr.lvl2:hover td { background: #f4f6f8; }
+
+  .chev { display: inline-block; width: 16px; color: #9aa3b2; font-size: 11px; }
+  .count { font-size: 11px; background: #eef0f3; color: #5a6577; border-radius: 10px; padding: 1px 8px; margin-left: 6px; font-weight: 500; }
+  .badge { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; margin-right: 6px; }
+  .badge.buy { background: #e8f0fe; color: #1a6ee0; }
+  .badge.sell { background: #e2f5ec; color: #0f8a5f; }
+  .badge.type { background: #eef0f3; color: #5a6577; font-weight: 600; }
+  .badge.open { background: #fef3dd; color: #a06a00; font-weight: 600; }
+  .sub-line { font-size: 11.5px; color: #7a8496; font-weight: 400; margin-top: 2px; padding-left: 0; }
+  .tid { color: #1a6ee0; font-weight: 600; }
+  .indent1 { padding-left: 28px !important; }
+  .star { color: #f0a500; }
+
+  /* ===== Trade detail modal (Position Manager popup look) ===== */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(20,30,50,.45); z-index: 50; }
+  .overlay.show { display: flex; align-items: flex-start; justify-content: center; padding: 32px 24px; }
+  .modal { font-family: "IBM Plex Sans", sans-serif; background: #fff; border-radius: 16px; width: 100%; max-width: 1150px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(20,30,50,.3); padding: 20px 26px 26px; }
+  .modal-head { border: 1px solid #e3e6ea; border-radius: 12px; padding: 18px 22px; margin-bottom: 18px; position: relative; }
+  .modal-head h2 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  .modal-head .kv { font-size: 13.5px; color: #3c4658; display: flex; gap: 28px; flex-wrap: wrap; }
+  .modal-head .kv b { font-weight: 600; }
+  .modal-head .period { margin-top: 8px; color: #5a6577; font-size: 13px; }
+  .modal-x { position: absolute; top: 14px; right: 18px; cursor: pointer; color: #9aa3b2; font-size: 17px; }
+
+  table.ptab { width: 100%; border: 1px solid #e3e6ea; border-radius: 10px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+  .ptab thead th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #7a8496; text-align: right; background: #f6f7f9; font-weight: 600; padding: 10px 12px; border-bottom: 1px solid #e3e6ea; }
+  .ptab thead th:first-child { text-align: left; min-width: 340px; }
+  .ptab td { padding: 9px 12px; border-bottom: 1px solid #eef0f3; text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .ptab td:first-child { text-align: left; border-left: 3px solid transparent; }
+  .ptab tr.sect td { background: #fefce8; font-weight: 700; font-size: 13.5px; text-align: left; cursor: pointer; padding: 12px; }
+  .ptab tr.sect td .schev { display: inline-block; width: 18px; color: #5a6577; font-size: 11px; }
+  .ptab tr.sect td .stot { font-weight: 400; color: #7a8496; font-size: 12px; margin-left: 10px; }
+  .ptab tr.item td:first-child { border-left: 3px solid #e8f0fe; }
+  .ptab .co { color: #1a6ee0; font-weight: 600; font-size: 13.5px; }
+  .ptab .co-line { display: flex; justify-content: space-between; align-items: center; max-width: 340px; }
+  .ptab .dline { font-size: 11.5px; color: #7a8496; margin-top: 3px; }
+  .ptab .dline b { font-weight: 600; color: #5a6577; }
+  .ptab .empty { color: #9aa3b2; text-align: left !important; }
+
+  /* Column settings popup */
+  .popup { display: none; position: absolute; top: 54px; right: 24px; width: 340px; background: #fff; border: 1px solid #e3e6ea; border-radius: 14px; box-shadow: 0 12px 32px rgba(20,30,50,.14); padding: 20px; z-index: 10; }
+  .popup.show { display: block; }
+  .popup h3 { font-size: 15px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .popup h3 span { cursor: pointer; color: #9aa3b2; font-weight: 400; }
+  .popup .sect { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #7a8496; font-weight: 700; margin: 16px 0 8px; }
+  .popup .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .popup label.chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; font-weight: 400; }
+  .popup .horizon { display: inline-block; background: #1a6ee0; color: #fff; font-size: 13px; font-weight: 600; padding: 8px 26px; border-radius: 8px; }
+  .popup .togglerow { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13.5px; }
+  .switch { width: 36px; height: 20px; border-radius: 10px; background: #1a6ee0; position: relative; cursor: pointer; flex-shrink: 0; }
+  .switch.off { background: #c9d0da; }
+  .switch::after { content: ""; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .switch.off::after { right: auto; left: 2px; }
+  .popup .foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; border-top: 1px solid #eef0f3; padding-top: 14px; }
+  .popup .foot button { border-radius: 8px; padding: 8px 18px; font-size: 13px; cursor: pointer; border: 1px solid #c9d0da; background: #fff; font-family: inherit; }
+  .popup .foot button.pri { background: #1a6ee0; color: #fff; border-color: #1a6ee0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Trade View</h1>
+  <span class="tab">Position Manager</span>
+  <span class="tab active">Trade View</span>
+  <span class="sync">312 trades · 890 bids/offers · 2,356 deals · last synced 02 Jul, 01:11 pm &nbsp; <a href="#">&#8635; Refresh</a></span>
+</div>
+
+<div class="filters">
+  <span><label>Group By:</label><select><option>Commodity / Grade</option><option>Company</option></select></span>
+  <span><label>Form:</label><select><option>Biomass Briquette</option><option>All</option></select></span>
+  <span><label>Geography:</label><input type="text" value="Dahej, Gujarat, India" style="width:170px"></span>
+  <span><label>Radius:</label><input type="text" value="200" style="width:56px"> <label style="font-weight:400">Km</label></span>
+  <span><label>Trade ID:</label><input type="text" placeholder="Search trade ID" style="width:120px"></span>
+  <span><label>Company Name:</label><input type="text" placeholder="Search company" style="width:140px"></span>
+  <span><label>Buy/Sell:</label><select><option>All</option><option>Buy</option><option>Sell</option></select></span>
+  <button class="colbtn" id="colbtn">&#9881; Columns</button>
+
+  <div class="popup" id="popup">
+    <h3>&#9881; Column Settings <span id="closepop">&#10005;</span></h3>
+    <div class="sect">Time Horizon</div>
+    <span class="horizon">Month</span>
+    <div class="sect">Time Periods</div>
+    <div class="grid2" id="periods"></div>
+    <div class="sect">Sub-Columns</div>
+    <div id="subcols"></div>
+    <div class="foot"><button id="selall">Select All</button><button class="pri" id="donepop">Done</button></div>
+  </div>
+</div>
+
+<div class="meta">
+  <span class="legend"><b class="buy">+ Buy</b> &nbsp;·&nbsp; <b class="sell">− Sell</b> &nbsp;·&nbsp; all values net MT &nbsp;·&nbsp; all active trades shown</span>
+  <span>Qty = trade/deal total, spread evenly across months in its period — no delivery schedules</span>
+</div>
+
+<div class="wrap">
+<table class="main" id="tbl">
+<thead id="thead"></thead>
+<tbody id="grid"></tbody>
+</table>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const SUBCOLS = [
+  ["total",  "Total Qty"],
+  ["bid",    "Bid/Ofr"],
+  ["deal",   "Deal"],
+  ["linked", "Linked"],
+  ["open",   "Open"]
+];
+const PERIODS = [
+  ["totalcol", "Total",                     null],
+  ["past",     "Past",                      0],
+  ["prev",     "Previous Month (Jun '26)",  1],
+  ["cur",      "Current Month (Jul '26)",   2],
+  ["next",     "Next Month (Aug '26)",      3],
+  ["future",   "Future",                    4]
+];
+let periodOn = { totalcol: false, past: false, prev: false, cur: true, next: false, future: true };
+let subOn    = { total: true, bid: true, deal: true, linked: true, open: true };
+
+const Z = [0,0,0,0,0];
+const add = (a,b) => a.map((v,i) => v + b[i]);
+const sum = a => a.reduce((x,y) => x + y, 0);
+
+const BIDDERS = [
+  ["Lambion Energy","Gandhinagar District, Gujarat"], ["Nr Buyer Company","Ahmedabad District, Gujarat"],
+  ["GoGreenCompanies","Ahmedabad District, Gujarat"], ["Shashank Traders","Ahmedabad District, Gujarat"],
+  ["BlueSky Agro Industries","Ahmedabad District, Gujarat"], ["CVS Pvt. Ltd.","Ahmedabad District, Gujarat"],
+  ["RP Pvt Ltd","Ahmedabad District, Gujarat"], ["AA SADHU RAM RICE MILLS","Ahmedabad District, Gujarat"],
+  ["AO HINDUSTAN CYCLES AND TUBES LLP","Ahmedabad District, Gujarat"], ["Waghle PVT Ltd","Ahmedabad District, Gujarat"],
+  ["Relience Pvt. Ltd.","Ahmedabad District, Gujarat"], ["Great Manufacturing","Ahmedabad District, Gujarat"],
+  ["ACME Corporation","Kheda District, Gujarat"], ["Nr Buyer Company","Anand District, Gujarat"],
+  ["Barot Traders","Vadodara District, Gujarat"], ["Ram Industry","Erode District, Tamil Nadu"],
+  ["Shashank Traders","Vadodara District, Gujarat"], ["GoGreenCompanies","Bharuch District, Gujarat"],
+  ["IDHMA PVT LTD","Botad District, Gujarat"], ["Sustainable Smile","Vadodara District, Gujarat"],
+  ["Sahil Industries","Raigad District, Maharashtra"], ["MD services","Bhavnagar District, Gujarat"],
+  ["Pawan Pvt Ltd","Gandhinagar District, Gujarat"], ["ACME Corporation","Vadodara District, Gujarat"],
+  ["BlueSky Agro Industries","Kheda District, Gujarat"], ["Waghle PVT Ltd","Bharuch District, Gujarat"]
+];
+
+function genBids(n, sign, buckets, commodity) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const [co, loc] = BIDDERS[i % BIDDERS.length];
+    const q = (10 + (i % 8) * 5) * sign;
+    const b = Z.slice();
+    buckets.forEach(bi => b[bi] = q);
+    out.push({ sec: "bid", side: sign > 0 ? "Buy" : "Sell", co, loc, commodity,
+      id: "#B-" + (300 + i * 3), price: "₹" + (6800 + (i % 12) * 85).toLocaleString() + "/MT",
+      rating: (1.8 + (i % 14) / 10).toFixed(1), period: "1 Jul – 30 Sep 25", open: true, b });
+  }
+  return out;
+}
+
+const DATA = [
+  { name: "Castor Seed", trades: [
+    { id: "T-0980", side: "Buy", company: "MD services", rating: "2.5", detail: "Bhavnagar District, Gujarat · ₹7,800/MT target · Delivered · 1 Jun – 31 Jul 25",
+      total: [0,150,150,0,0], bid: [0,50,50,0,0], deal: [0,20,20,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Buy", co: "Pawan Pvt Ltd", loc: "Gandhinagar District, Gujarat", commodity: "Castor Seed", id: "#70650", price: "₹4,500/MT", rating: "2.3", period: "1 Jul – 30 Jul 25", b: [0,20,20,0,0] } ]
+      .concat(genBids(6, 1, [1,2], "Castor Seed")) },
+    { id: "T-1102", side: "Sell", company: "Barot Traders", rating: "2.8", detail: "Vadodara District, Gujarat · ₹8,100/MT ask · Delivered · 1 – 31 Jul 25",
+      total: [0,0,-140,0,0], bid: [0,0,-40,0,0], deal: [0,0,-15,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Sell", co: "ACME Corporation", loc: "Kheda District, Gujarat", commodity: "Castor Seed", id: "#74102", price: "₹8,050/MT", rating: "2.9", period: "1 – 31 Jul 25", b: [0,0,-15,0,0] } ]
+      .concat(genBids(4, -1, [2], "Castor Seed")) } ] },
+
+  { name: "Coriander", trades: [
+    { id: "T-1011", side: "Sell", company: "Shashank Traders", rating: "3.1", detail: "Ahmedabad District, Gujarat · ₹6,200/MT ask · Delivered · 1 – 31 Jul 25",
+      total: [0,0,-200,0,0], bid: [0,0,-60,0,0], deal: [0,0,-33,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Sell", co: "GoGreenCompanies", loc: "Bharuch District, Gujarat", commodity: "Coriander", id: "#71105", price: "₹6,000/MT", rating: "2.4", period: "1 – 31 Jul 25", b: [0,0,-33,0,0] } ]
+      .concat(genBids(5, -1, [2], "Coriander")) },
+    { id: "T-1130", side: "Buy", company: "ACME Corporation", rating: "2.9", detail: "Kheda District, Gujarat · ₹6,400/MT target · Delivered · 1 – 31 Jul 25",
+      total: [0,0,190,0,0], bid: [0,0,80,0,0], deal: [0,0,30,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Buy", co: "Shashank Traders", loc: "Vadodara District, Gujarat", commodity: "Coriander", id: "#74310", price: "₹6,350/MT", rating: "3.1", period: "1 – 31 Jul 25", b: [0,0,30,0,0] } ]
+      .concat(genBids(7, 1, [2], "Coriander")) } ] },
+
+  { name: "Corn", trades: [
+    { id: "T-0999", side: "Sell", company: "Ram Industry", rating: "2.6", detail: "Erode District, Tamil Nadu · ₹5,900/MT ask · Delivered · 1 Jun – 31 Jul 25",
+      total: [0,-250,-250,0,0], bid: [0,0,-20,0,0], deal: [0,-215,-215,0,0], linked: [0,-40,-40,0,0],
+      items: [
+        { sec: "linked", side: "Sell", co: "Great Manufacturing", loc: "Ahmedabad District, Gujarat", commodity: "Corn", id: "#L-77", price: "", rating: "2.7", period: "linked to Deal #73020", linkedMT: "40/215", b: [0,-40,-40,0,0] },
+        { sec: "deal", side: "Sell", co: "Great Manufacturing", loc: "Ahmedabad District, Gujarat", commodity: "Corn", id: "#73020", price: "₹5,850/MT", rating: "2.7", period: "1 Jun – 31 Jul 25", linkedMT: "40/215", b: [0,-215,-215,0,0] } ]
+      .concat(genBids(4, -1, [2], "Corn")) },
+    { id: "T-1075", side: "Buy", company: "Great Manufacturing", rating: "2.7", detail: "Ahmedabad District, Gujarat · ₹6,000/MT target · Delivered · 1 Jul – 31 Aug 25",
+      total: [0,0,240,240,0], bid: [0,0,60,60,0], deal: [0,0,200,200,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Buy", co: "Ram Industry", loc: "Erode District, Tamil Nadu", commodity: "Corn", id: "#73544", price: "₹5,950/MT", rating: "2.6", period: "1 Jul – 31 Aug 25", b: [0,0,200,200,0] } ]
+      .concat(genBids(5, 1, [2,3], "Corn")) } ] },
+
+  { name: "Corn and Cotton", trades: [
+    { id: "T-1042", side: "Buy", company: "Pawan Pvt Ltd", rating: "2.3", detail: "Gandhinagar District, Gujarat · ₹6,900/MT target · Delivered · 1 Jul – 30 Sep 25",
+      total: [0,0,400,400,400], bid: [0,0,150,150,0], deal: [0,0,220,220,0], linked: [0,0,50,50,0],
+      items: [
+        { sec: "linked", side: "Buy", co: "Sahil Industries", loc: "Raigad District, Maharashtra", commodity: "Coffee", id: "#L-88", price: "₹8,004/MT", rating: "1.9", period: "linked to Deal #72232", linkedMT: "10/10/10", b: [0,0,50,50,0] },
+        { sec: "deal", side: "Buy", co: "Pawan Pvt Ltd", loc: "Gandhinagar District, Gujarat", commodity: "Corn and Cotton", id: "#72232", price: "₹6,986/MT", rating: "2.3", period: "1 Oct – 30 Nov 25", linkedMT: "100/610", b: [0,0,100,100,0] },
+        { sec: "deal", side: "Buy", co: "Pawan Pvt Ltd", loc: "Gandhinagar District, Gujarat", commodity: "Corn and Cotton", id: "#72270", price: "₹7,986/MT", rating: "2.3", period: "1 Oct – 30 Nov 25", linkedMT: "200/610", b: [0,0,120,120,0] } ]
+      .concat(genBids(26, 1, [2,3], "Corn and Cotton")) },
+    { id: "T-1067", side: "Sell", company: "RP Pvt Ltd", rating: "2.7", detail: "Ahmedabad District, Gujarat · ₹7,400/MT ask · Delivered · 1 Jul – 30 Sep 25",
+      total: [0,0,-390,-300,-300], bid: [0,0,-120,-100,-100], deal: [0,0,-210,-130,-100], linked: [0,0,-50,-50,-50],
+      items: [
+        { sec: "linked", side: "Sell", co: "RP Pvt Ltd", loc: "Ahmedabad District, Gujarat", commodity: "Corn and Cotton", id: "#L-92", price: "", rating: "2.7", period: "linked to Deal #71646", linkedMT: "100/300", b: [0,0,-50,-50,-50] },
+        { sec: "deal", side: "Sell", co: "RP Pvt Ltd", loc: "Ahmedabad District, Gujarat", commodity: "Corn and Cotton", id: "#71646", price: "₹4,000/MT", rating: "2.7", period: "28 Aug – 26 Sept 25", linkedMT: "100/300", b: [0,0,-210,-130,-100] } ]
+      .concat(genBids(9, -1, [2,3,4], "Corn and Cotton")) },
+    { id: "T-1088", side: "Buy", company: "MD services", rating: "2.5", detail: "Bhavnagar District, Gujarat · ₹7,800/MT target · Delivered · 1 – 31 Jul 25",
+      total: [0,0,180,0,0], bid: [0,0,40,0,0], deal: [0,0,60,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Buy", co: "MD services", loc: "Bhavnagar District, Gujarat", commodity: "Corn and Cotton", id: "#74417", price: "₹7,800/MT", rating: "2.5", period: "2 May – 2 Jun 26", b: [0,0,60,0,0] } ]
+      .concat(genBids(6, 1, [2], "Corn and Cotton")) },
+    { id: "T-1095", side: "Sell", company: "Sahil Industries", rating: "1.9", detail: "Raigad District, Maharashtra · ₹7,900/MT ask · Delivered · 1 Jul – 31 Aug 25",
+      total: [0,0,-180,-160,0], bid: [0,0,-60,-40,0], deal: [0,0,-70,-60,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Sell", co: "Lambion Energy", loc: "Gandhinagar District, Gujarat", commodity: "Corn and Cotton", id: "#73356", price: "₹6,995/MT", rating: "2.3", period: "10 Dec – 27 Dec 25", linkedMT: "10/180", b: [0,0,-70,-60,0] } ]
+      .concat(genBids(5, -1, [2,3], "Corn and Cotton")) } ] },
+
+  { name: "Cotton and Wood", trades: [
+    { id: "T-1120", side: "Buy", company: "Lambion Energy", rating: "3.0", detail: "Gandhinagar District, Gujarat · ₹6,600/MT target · Delivered · 1 Jul – 31 Aug 25",
+      total: [0,0,40,40,0], bid: [0,0,10,10,0], deal: Z.slice(), linked: Z.slice(),
+      items: genBids(3, 1, [2,3], "Cotton and Wood") } ] },
+
+  { name: "Groundnut", trades: [
+    { id: "T-0871", side: "Buy", company: "BlueSky Agro Industries", rating: "2.9", detail: "Rajkot District, Gujarat · ₹5,500/MT target · Delivered · 1 May – 30 Jun 25",
+      total: [120,120,0,0,0], bid: Z.slice(), deal: [60,60,0,0,0], linked: Z.slice(),
+      items: [
+        { sec: "deal", side: "Buy", co: "CVS Pvt. Ltd.", loc: "Ahmedabad District, Gujarat", commodity: "Groundnut", id: "#69880", price: "₹5,400/MT", rating: "2.6", period: "1 May – 30 Jun 25", b: [60,60,0,0,0] } ] },
+    { id: "T-1093", side: "Sell", company: "Waghle PVT Ltd", rating: "2.6", detail: "Rajkot District, Gujarat · ₹5,900/MT ask · Delivered · 15 Sep – 15 Oct 25",
+      total: [0,0,0,0,-160], bid: [0,0,0,0,-80], deal: Z.slice(), linked: Z.slice(),
+      items: genBids(4, -1, [4], "Groundnut") } ] }
+];
+
+DATA.forEach(c => {
+  c.trades.forEach(t => { t.open = t.total.map((v,i) => v - t.deal[i]); });
+  c.agg = {};
+  ["total","bid","deal","linked","open"].forEach(m =>
+    c.agg[m] = c.trades.reduce((a,t) => add(a, t[m]), Z.slice()));
+});
+const BOOK = {};
+["total","bid","deal","linked","open"].forEach(m =>
+  BOOK[m] = DATA.reduce((a,c) => add(a, c.agg[m]), Z.slice()));
+
+const openC = {};
+
+function activePeriods() { return PERIODS.filter(p => periodOn[p[0]]); }
+function activeSubs() { return SUBCOLS.filter(s => subOn[s[0]]); }
+function pick(arr, bucketIdx) { return bucketIdx === null ? sum(arr) : arr[bucketIdx]; }
+
+function fmt(v) {
+  if (v === 0) return '<span class="num-zero">0</span>';
+  const cls = v > 0 ? "num-pos" : "num-neg";
+  return '<span class="' + cls + '">' + (v > 0 ? "+" : "−") + Math.abs(v).toLocaleString() + '</span>';
+}
+
+function cellsFor(get) {
+  let h = "";
+  activePeriods().forEach(p => {
+    const cur = p[0] === "cur" ? " cur" : "";
+    activeSubs().forEach((s, si) => {
+      h += '<td class="num' + (si === 0 ? ' gline' : '') + cur + '">' + fmt(pick(get(s[0]), p[2])) + '</td>';
+    });
+  });
+  return h;
+}
+
+function badge(side) { return '<span class="badge ' + side.toLowerCase() + '">' + side + '</span>'; }
+
+function renderHead() {
+  const subs = activeSubs(), pers = activePeriods();
+  let g = '<tr class="grp"><th class="name" style="border-left:none"></th>';
+  pers.forEach(p => { g += '<th colspan="' + subs.length + '"' + (p[0] === "cur" ? ' class="cur gline"' : ' class="gline"') + '>' + p[1] + '</th>'; });
+  g += '</tr>';
+  let s = '<tr class="sub"><th class="name">Trade Details</th>';
+  pers.forEach(p => subs.forEach((sc, si) => {
+    s += '<th class="' + (si === 0 ? 'gline' : '') + (p[0] === "cur" ? ' cur' : '') + '">' + sc[1] + '</th>';
+  }));
+  s += '</tr>';
+  document.getElementById("thead").innerHTML = g + s;
+}
+
+function render() {
+  renderHead();
+  let h = '<tr class="total"><td class="name">TOTAL</td>' + cellsFor(m => BOOK[m]) + '</tr>';
+
+  DATA.forEach((c, ci) => {
+    const oc = openC[ci];
+    h += '<tr class="lvl1" data-c="' + ci + '"><td class="name"><span class="chev">' + (oc ? "▼" : "▶") + '</span>' + c.name +
+         '<span class="count">' + c.trades.length + '</span></td>' + cellsFor(m => c.agg[m]) + '</tr>';
+    if (oc) c.trades.forEach((t, ti) => {
+      h += '<tr class="lvl2" data-modal="' + ci + '-' + ti + '"><td class="name indent1">' +
+           badge(t.side) + '<span class="tid">' + t.id + ' ↗</span> &nbsp;' + t.company + ' <span class="star">★</span> ' + t.rating +
+           '<div class="sub-line">' + t.detail + '</div></td>' + cellsFor(m => t[m]) + '</tr>';
+    });
+  });
+
+  document.getElementById("grid").innerHTML = h;
+  document.querySelectorAll("[data-c]").forEach(r => r.onclick = () => { openC[r.dataset.c] = !openC[r.dataset.c]; render(); });
+  document.querySelectorAll("[data-modal]").forEach(r => r.onclick = () => {
+    const [ci, ti] = r.dataset.modal.split("-").map(Number);
+    showModal(DATA[ci].trades[ti], DATA[ci].name);
+  });
+}
+
+/* ===== Modal ===== */
+let modalTrade = null, modalCommodity = "", sectOpen = {};
+
+function itemRow(it, pers) {
+  let first = '<div class="co-line"><span class="co">' + it.co + '</span><span style="font-size:12px;"><span class="star">★</span> ' + it.rating + '</span></div>' +
+    '<div style="margin-top:3px;">' + badge(it.side) + it.commodity + ' <span class="tid">' + it.id + ' ↗</span>' +
+    (it.open ? ' <span class="badge open">Open</span>' : '') + '</div>' +
+    '<div class="dline">' + it.loc + (it.price ? ' | ' + it.price + ' · Delivered' : '') + '</div>' +
+    '<div class="dline">' + it.period + (it.linkedMT ? ' &nbsp;|&nbsp; ⇔ Linked (MT): <b>' + it.linkedMT + '</b>' : '') + '</div>';
+  let h = '<tr class="item"><td>' + first + '</td>';
+  pers.forEach(p => h += '<td>' + fmt(pick(it.b, p[2])) + '</td>');
+  return h + '</tr>';
+}
+
+function sectionRows(key, title, items, pers) {
+  const nCols = pers.length + 1;
+  const tot = Math.abs(sum(items.reduce((a,i) => add(a, i.b), Z.slice())));
+  const isOpen = sectOpen[key];
+  let h = '<tr class="sect" data-sect="' + key + '"><td colspan="' + nCols + '"><span class="schev">' + (isOpen ? "▲" : "▼") + '</span>' +
+          title + ' (' + items.length + ')<span class="stot">— Total: ' + tot.toLocaleString() + ' MT</span></td></tr>';
+  if (isOpen) {
+    if (!items.length) h += '<tr><td class="empty" colspan="' + nCols + '">No ' + title.toLowerCase() + ' found for this trade</td></tr>';
+    else items.forEach(it => h += itemRow(it, pers));
+  }
+  return h;
+}
+
+function renderModal() {
+  const t = modalTrade, pers = activePeriods();
+  let h = '<div class="modal-head"><span class="modal-x" id="modalx">&#10005;</span>' +
+    '<h2>' + t.side + ' @ ' + (t.detail.match(/₹[\d,]+\/MT/) || [""])[0] + ' (Delivered) (Trade ID: ' + t.id + ')</h2>' +
+    '<div class="kv"><span><b>Counterparty:</b> ' + t.company + '</span><span><b>Rating:</b> <span class="star">★</span> ' + t.rating + '</span>' +
+    '<span><b>Commodity:</b> ' + modalCommodity + '</span>' +
+    '<span><b>Total Qty:</b> ' + fmt(sum(t.total)) + ' MT</span><span><b>Open Qty:</b> ' + fmt(sum(t.open)) + ' MT</span></div>' +
+    '<div class="period">' + t.detail + '</div></div>';
+
+  h += '<table class="ptab"><thead><tr><th>Pipeline</th>';
+  pers.forEach(p => h += '<th>' + p[1] + '</th>');
+  h += '</tr></thead><tbody>';
+  h += sectionRows("linked", "Linked Deals", t.items.filter(i => i.sec === "linked"), pers);
+  h += sectionRows("deal",   "Deals",        t.items.filter(i => i.sec === "deal"),   pers);
+  h += sectionRows("bid",    "Bids / Offers", t.items.filter(i => i.sec === "bid"),   pers);
+  h += '</tbody></table>';
+
+  document.getElementById("modal").innerHTML = h;
+  document.getElementById("modalx").onclick = () => document.getElementById("overlay").classList.remove("show");
+  document.querySelectorAll("[data-sect]").forEach(r => r.onclick = () => {
+    sectOpen[r.dataset.sect] = !sectOpen[r.dataset.sect]; renderModal();
+  });
+}
+
+function showModal(t, commodity) {
+  modalTrade = t; modalCommodity = commodity;
+  sectOpen = { linked: true, deal: true, bid: false };
+  renderModal();
+  document.getElementById("overlay").classList.add("show");
+}
+document.getElementById("overlay").onclick = e => { if (e.target.id === "overlay") e.target.classList.remove("show"); };
+
+/* ===== Column settings ===== */
+function renderPopup() {
+  document.getElementById("periods").innerHTML = PERIODS.map(p =>
+    '<label class="chk"><input type="checkbox" data-p="' + p[0] + '"' + (periodOn[p[0]] ? " checked" : "") + '> ' + p[1].replace(/ \(.*\)/, "") + '</label>').join('');
+  document.getElementById("subcols").innerHTML = SUBCOLS.map(s =>
+    '<div class="togglerow">' + (s[0] === "total" ? "Total Qty" : s[0] === "bid" ? "Bid/Offer" : s[0] === "deal" ? "Deal Done Qty" : s[0] === "linked" ? "Linked" : "Open") +
+    '<span class="switch' + (subOn[s[0]] ? '' : ' off') + '" data-s="' + s[0] + '"></span></div>').join('');
+  document.querySelectorAll("[data-p]").forEach(el => el.onchange = () => { periodOn[el.dataset.p] = el.checked; renderPopup(); render(); });
+  document.querySelectorAll("[data-s]").forEach(el => el.onclick = () => { subOn[el.dataset.s] = !subOn[el.dataset.s]; renderPopup(); render(); });
+}
+
+document.getElementById("colbtn").onclick = () => document.getElementById("popup").classList.toggle("show");
+document.getElementById("closepop").onclick = () => document.getElementById("popup").classList.remove("show");
+document.getElementById("donepop").onclick = () => document.getElementById("popup").classList.remove("show");
+document.getElementById("selall").onclick = () => {
+  PERIODS.forEach(p => periodOn[p[0]] = true);
+  SUBCOLS.forEach(s => subOn[s[0]] = true);
+  renderPopup(); render();
+};
+
+renderPopup();
+render();
+</script>
+</body>
+</html>
